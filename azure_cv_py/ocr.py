@@ -4,6 +4,7 @@ Functions using the OCR API.
 
 import os
 import requests
+from .constants import OCR_API_ENDPOINT
 
 
 def extract_characters_with_azure_cv_ocr(image_path: str) -> dict:
@@ -29,9 +30,6 @@ def extract_characters_with_azure_cv_ocr(image_path: str) -> dict:
             'No endpoint found. please set your endpoint of the Azure Computer Vision to the env path "COMPUTER_VISION_ENDPOINT."'
         )
 
-    ocr_api_endpoint = "vision/v3.1/ocr"
-    ocr_url = f"{os.environ['COMPUTER_VISION_ENDPOINT'].rstrip('/')}/{ocr_api_endpoint}"
-
     # Read the image into a byte array
     image_data = open(image_path, "rb").read()
 
@@ -45,6 +43,7 @@ def extract_characters_with_azure_cv_ocr(image_path: str) -> dict:
     params = {'language': 'unk', 'detectOrientation': 'true'}
 
     # put the byte array into your post request
+    ocr_url = f"{os.environ['COMPUTER_VISION_ENDPOINT'].rstrip('/')}/{OCR_API_ENDPOINT}"
     response = requests.post(ocr_url, headers=headers, params=params, data=image_data)
     response.raise_for_status()
 
