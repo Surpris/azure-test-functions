@@ -3,22 +3,27 @@ Utility functions.
 """
 
 import os
-from getpass import getpass
 
 
-def set_key() -> None:
+def set_key(key: str) -> None:
     """
     set your key for the Azure Computer Vision.
-    This function is supposed to be used in an interaction mode.
+
+    Paramtetrs
+    ==========
+    key: str
+        your key.
     """
-    print("set your key for the Azure Computer Vision:")
-    os.environ['COMPUTER_VISION_KEY'] = getpass()
+    os.environ['COMPUTER_VISION_KEY'] = key
 
 
-def set_endpoint() -> None:
+def set_endpoint(endpoint: str) -> None:
     """
     set your endpoint of the Azure Computer Vision.
-    This function is supposed to be used in an interaction mode.
+
+    Paramtetrs
+    ==========
+    endpoint: str
+        your endpoint.
     """
-    print("set your endpoint of the Azure Computer Vision:")
-    os.environ['COMPUTER_VISION_ENDPOINT'] = getpass()
+    os.environ['COMPUTER_VISION_ENDPOINT'] = endpoint
