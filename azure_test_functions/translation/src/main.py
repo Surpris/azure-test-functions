@@ -12,9 +12,9 @@ LANGUAGE_FROM: str = "en"
 LANGUAGE_TO: str = "ja"
 EXCLUDE_SUFFIX: str = "merged"
 
-KEY_TRANSLATION: str = os.environ.get("AZURE_TRANSLATION_KEY", None)
-ENDPOINT_BASE: str = os.environ.get("AZURE_TRANSLATION_ENDPOINT", None)
-ENDPOINT_REGION: str = os.environ.get("AZURE_TRANSLATION_ENDPOINT_REGION", None)
+KEY_TRANSLATION: str = os.environ.get("AZURE_TRANSLATION_KEY", "")
+ENDPOINT_BASE: str | None = os.environ.get("AZURE_TRANSLATION_ENDPOINT", None)
+ENDPOINT_REGION: str | None = os.environ.get("AZURE_TRANSLATION_ENDPOINT_REGION", None)
 
 # Create an Image Analysis client
 CLIENT = TextTranslationClient(
@@ -27,7 +27,7 @@ CLIENT = TextTranslationClient(
 _KEYBOARD_INTERRUPT_FLAG: bool = False
 
 
-def save(fpath: str, value: str):
+def save(fpath: str, value: str) -> None:
     """Saves a string to a specified file.
 
     Args:
@@ -45,7 +45,7 @@ def save(fpath: str, value: str):
 def translate(
     text: str, from_language: str = LANGUAGE_FROM,
     to_language: str = LANGUAGE_TO
-):
+) -> str | None:
     """Translates text from one language to another using Azure Text Translation service.
 
     Args:
@@ -77,7 +77,7 @@ def translate(
     return translation
 
 
-def translate_from_file(fpath: str, language: str = LANGUAGE_TO):
+def translate_from_file(fpath: str, language: str = LANGUAGE_TO) -> str | None:
     """Translates text from a file to a specified language using Azure Text Translation service.
 
     Args:
@@ -96,7 +96,7 @@ def translate_from_file(fpath: str, language: str = LANGUAGE_TO):
         return translate(ff.read(), to_language=language)
 
 
-def translate_from_dir(src: str, language: str = LANGUAGE_TO):
+def translate_from_dir(src: str, language: str = LANGUAGE_TO) -> None:
     """Translates text files from a directory to a specified language
     using Azure Text Translation service.
 
@@ -152,6 +152,7 @@ def translate_from_dir(src: str, language: str = LANGUAGE_TO):
                     "_translated.txt"
                 )
             )
+            translated: str | None = None
             if os.path.exists(dstpath_target):
                 print("already translated.")
                 with open(dstpath_target, "r", encoding="utf-8") as ff:
@@ -194,7 +195,7 @@ def translate_from_dir(src: str, language: str = LANGUAGE_TO):
     save(dstpath_target, "\n\n".join(translated_list))
 
 
-def main(fpath: str, language: str = LANGUAGE_TO):
+def main(fpath: str, language: str = LANGUAGE_TO) -> None:
     """Translates text or text files to a specified language.
 
     Args:

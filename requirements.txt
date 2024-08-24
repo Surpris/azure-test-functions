@@ -1,8 +1,5 @@
 # General
 
-autopep8
-flake8
-pylint
 requests
 
 # Azure general
@@ -26,3 +23,10 @@ mutagen
 # translation
 
 azure-ai-translation-text
+
+# Develop
+
+autopep8
+flake8
+mypy
+pylint

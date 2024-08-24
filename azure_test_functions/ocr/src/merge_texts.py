@@ -2,11 +2,12 @@
 
 import json
 import os
+from typing import Dict, List, Any
 
 DEFAULT_OUTPUT_DIRNAME: str = "merged"
 
 
-def is_in_bounding_rect(src: list, bounding: list) -> bool:
+def is_in_bounding_rect(src: List[int], bounding: List[int]) -> bool:
     """Checks if a source rectangle is completely contained within a bounding rectangle.
 
     Args:
@@ -26,6 +27,10 @@ def is_in_bounding_rect(src: list, bounding: list) -> bool:
         >>> is_in_bounding_rect([30, 30, 40, 40], [0, 0, 30, 30])
         False
     """
+    if len(src) != 4 or len(bounding) != 4:
+        raise ValueError(
+            "Both `src` and `bounding` must be lists of length 4."
+        )
     if src[0] < bounding[0]:
         return False
     if src[1] < bounding[1]:
@@ -37,7 +42,7 @@ def is_in_bounding_rect(src: list, bounding: list) -> bool:
     return True
 
 
-def save(fpath: str, value: str):
+def save(fpath: str, value: str) -> None:
     """Saves a string to a specified file.
 
     Args:
@@ -52,7 +57,7 @@ def save(fpath: str, value: str):
         ff.write(value)
 
 
-def extract_texts(src: dict, bounding_rect: list | None = None) -> str:
+def extract_texts(src: Dict[str, Any], bounding_rect: List[int] | None = None) -> str:
     """Extracts text from a given source within an optional bounding rectangle.
 
     Args:
@@ -69,7 +74,7 @@ def extract_texts(src: dict, bounding_rect: list | None = None) -> str:
     Raises:
         KeyError: If the `src` dictionary does not have the expected structure.
     """
-    texts_in: list = []
+    texts_in: List[str] = []
     if bounding_rect is not None:
         for line in src["readResult"]["blocks"][0]["lines"]:
             bounding_ = [
@@ -86,7 +91,7 @@ def extract_texts(src: dict, bounding_rect: list | None = None) -> str:
 
 
 def extract_texts_from_file(
-    src: str, bounding_rect: list | None = None,
+    src: str, bounding_rect: List[int] | None = None,
     dst: str | None = None
 ) -> str | None:
     """Extracts text from a JSON file containing OCR results,
@@ -109,7 +114,7 @@ def extract_texts_from_file(
         FileNotFoundError: If the specified file cannot be found.
         json.JSONDecodeError: If the JSON data in the file is invalid.
     """
-    data: dict | None = None
+    data: Dict[str, Any] = {}
     with open(src, "r", encoding="utf-8") as ff:
         data = json.load(ff)
     texts: str = extract_texts(data, bounding_rect)
@@ -119,9 +124,9 @@ def extract_texts_from_file(
 
 
 def extract_texts_from_dir(
-    src: str, bounding_rect: list | None = None,
+    src: str, bounding_rect: List[int] | None = None,
     dst_dir_path: str | None = None
-) -> list:
+) -> List[str | None]:
     """Extracts text from all JSON files in a given directory
     and saves the extracted text to a given directory.
 
@@ -146,7 +151,7 @@ def extract_texts_from_dir(
     if dst_dir_path is not None and not os.path.isdir(dst_dir_path):
         raise NotADirectoryError("'dst_dir_path' must be a directory path.")
 
-    dst: list = []
+    dst: List[str | None] = []
     for fname in sorted(os.listdir(src)):
         fpath = os.path.join(src, fname)
         if not os.path.isfile(fpath):
@@ -168,10 +173,11 @@ def extract_texts_from_dir(
 
 
 def main(
-    file_or_dir_path: str, bounding_rect: list | None = None,
+    file_or_dir_path: str, bounding_rect: List[int] | None = None,
     dst_file_or_dir_path: str | None = None
-):
-    """Extracts text from a given file or directory and saves the results to a specified destination.
+) -> None:
+    """Extracts text from a given file or directory and saves the results
+    to a specified destination.
 
     Args:
         file_or_dir_path (str): The path to the file or directory containing OCR results.
