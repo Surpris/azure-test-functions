@@ -3,6 +3,7 @@
 import os
 import time
 from typing import Dict, List, Type, Union
+from typing_extensions import TypeAlias
 from azure.cognitiveservices.speech import (
     SpeechConfig, AudioConfig, SpeechRecognizer,
     SpeechRecognitionResult, SpeechRecognitionEventArgs,
@@ -11,7 +12,7 @@ from azure.cognitiveservices.speech import (
 from mutagen.mp3 import MP3
 from mutagen.wave import WAVE
 
-MUTAGEN_ANALYZER_TYPE = MP3 | WAVE
+MUTAGEN_ANALYZER_TYPE: TypeAlias = MP3 | WAVE
 MUTAGEN_ANALYZER_DICT: Dict[str, Union[Type[MP3], Type[WAVE]]] = {
     "mp3": MP3,
     "wav": WAVE
@@ -23,9 +24,9 @@ WAIT_TIME_SEC: float = 3.0
 LANGUAGE: str = "ja-JP"
 DEFAULT_OUTPUT_DIRNAME: str = "transcribed"
 
-KEY_SPEECH: str = os.environ.get("AZURE_SPEECH_KEY", None)
-ENDPOINT_BASE: str = os.environ.get("AZURE_SPEECH_ENDPOINT", None)
-ENDPOINT_REGION: str = os.environ.get("AZURE_SPEECH_ENDPOINT_REGION", None)
+KEY_SPEECH: str | None = os.environ.get("AZURE_SPEECH_KEY", None)
+ENDPOINT_BASE: str | None = os.environ.get("AZURE_SPEECH_ENDPOINT", None)
+ENDPOINT_REGION: str| None = os.environ.get("AZURE_SPEECH_ENDPOINT_REGION", None)
 
 SPEECH_CONFIG = SpeechConfig(
     subscription=KEY_SPEECH, region=ENDPOINT_REGION,
@@ -35,7 +36,7 @@ SPEECH_CONFIG = SpeechConfig(
 _KEYBOARD_INTERRUPT_FLAG: bool = False
 
 
-def save(fpath: str, value: str):
+def save(fpath: str, value: str) -> None:
     """Saves a string to a specified file.
 
     Args:
@@ -74,9 +75,10 @@ def analyze(fpath: str) -> str:
         os.path.splitext(fpath)[-1][1:], None)
     if mutagen_analyzer is not None:
         audio: MUTAGEN_ANALYZER_TYPE = mutagen_analyzer(fpath)
-        audio_duration_sec = audio.info.length
+        if audio.info is not None:
+            audio_duration_sec = audio.info.length
 
-    def continuous_recognition_handler(evt: SpeechRecognitionEventArgs):
+    def continuous_recognition_handler(evt: SpeechRecognitionEventArgs) -> None:
         nonlocal results
         if evt.result.reason == ResultReason.RecognizedSpeech:
             results.append(evt.result.text)
@@ -103,7 +105,7 @@ def analyze(fpath: str) -> str:
     return " ".join(results)
 
 
-def analyze_from_dir(src: str):
+def analyze_from_dir(src: str) -> None:
     """Analyzes images in a directory and saves results as JSON files.
 
     This function iterates over image files in the specified directory, analyzes each image
@@ -171,7 +173,7 @@ def analyze_from_dir(src: str):
     save(dstpath_target, "\n\n".join(analyzed_list))
 
 
-def main(file_or_dir_path: str):
+def main(file_or_dir_path: str) -> None:
     """Analyzes an audio file or directory and saves the analysis results as JSON.
 
     This function recursively analyzes all audio files within the specified directory

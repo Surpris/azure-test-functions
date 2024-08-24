@@ -3,6 +3,7 @@
 import json
 import os
 import time
+from typing import Dict, Any
 from azure.ai.vision.imageanalysis import ImageAnalysisClient
 from azure.ai.vision.imageanalysis.models import VisualFeatures
 from azure.core.credentials import AzureKeyCredential
@@ -11,8 +12,8 @@ TIMEOUT_SEC: float = 30.0
 WAIT_TIME_SEC: float = 3.0
 DEFAULT_OUTPUT_DIRNAME: str = "analyzed"
 
-KEY_CV: str = os.environ.get("AZURE_CV_KEY", None)
-ENDPOINT_BASE: str = os.environ.get("AZURE_CV_ENDPOINT", None)
+KEY_CV: str = os.environ.get("AZURE_CV_KEY", "")
+ENDPOINT_BASE: str = os.environ.get("AZURE_CV_ENDPOINT", "")
 
 # Create an Image Analysis client
 CLIENT = ImageAnalysisClient(
@@ -22,7 +23,7 @@ CLIENT = ImageAnalysisClient(
 )
 
 
-def save(fpath: str, value: dict):
+def save(fpath: str, value: Dict[str, Any]) -> None:
     """Saves a dictionary to a JSON file.
 
     This function serializes a Python dictionary into JSON format and writes it to a specified file.
@@ -35,7 +36,7 @@ def save(fpath: str, value: dict):
         json.dump(value, ff, indent=4)
 
 
-def analyze(fpath: str):
+def analyze(fpath: str) -> Dict[str, Any]:
     """Analyzes an image using the Azure Computer Vision.
 
     This function takes the path to an image file, reads the image data, 
@@ -49,7 +50,7 @@ def analyze(fpath: str):
         dict: A dictionary containing the analysis results. The specific structure of the 
               dictionary will depend on the image analysis service being used.
     """
-    image_data: bytes = None
+    image_data: bytes = bytes()
     with open(fpath, "rb") as ff:
         image_data = ff.read()
 
@@ -60,7 +61,7 @@ def analyze(fpath: str):
     return result.as_dict()
 
 
-def analyze_from_dir(src: str):
+def analyze_from_dir(src: str) -> None:
     """Analyzes images in a directory and saves results as JSON files.
 
     This function iterates over image files in the specified directory, analyzes each image
@@ -104,17 +105,17 @@ def analyze_from_dir(src: str):
             # analyzed_list.append(analyzed)
             continue
         analyzed = analyze(os.path.join(src, fname))
-        if analyzed is None:
-            print("failure in analysis. skip.")
-            time.sleep(WAIT_TIME_SEC)
-            continue
+        # if analyzed is None:
+        #     print("failure in analysis. skip.")
+        #     time.sleep(WAIT_TIME_SEC)
+        #     continue
         # analyzed_list.append(analyzed)
         save(dstpath_target, analyzed)
         print("done.")
         time.sleep(WAIT_TIME_SEC)
 
 
-def main(fpath: str):
+def main(fpath: str) -> None:
     """Analyzes an image or a directory of images.
 
     This function determines whether the provided path is a file or a directory.

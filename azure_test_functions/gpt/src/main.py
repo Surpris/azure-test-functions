@@ -5,7 +5,9 @@ GPT test
 
 from datetime import datetime
 import os
+import warnings
 from openai import AzureOpenAI
+from openai.types.chat import ChatCompletionMessageParam, ChatCompletion
 
 MAX_TOKENS: int = 50
 TIMEOUT_SEC: float = 30.0
@@ -14,8 +16,8 @@ DEFAULT_OUTPUT_DIRPATH: str = r'C:\home\local\test\data\gpt'
 DATETIME_FORMAT: str = '%Y%m%d%H%M%S'
 
 ENDPOINT_KEY: str | None = os.getenv("AZURE_OPENAI_KEY")
-ENDPOINT_BASE: str | None = os.getenv("AZURE_OPENAI_ENDPOINT")
-MODEL: str | None = os.getenv("AZURE_OPENAI_CHAT_MODEL")
+ENDPOINT_BASE: str = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
+MODEL: str = os.environ.get("AZURE_OPENAI_CHAT_MODEL", "")
 API_VERSION: str | None = os.getenv("AZURE_OPENAI_CHAT_API_VERSION")
 # LOCATION: str | None = os.getenv("AZURE_OPENAI_LOCATION")
 
@@ -26,7 +28,7 @@ CLIENT = AzureOpenAI(
 )
 
 
-def save(fpath: str, value: str):
+def save(fpath: str, value: str) -> None:
     """Saves a string to a specified file.
 
     Args:
@@ -41,12 +43,12 @@ def save(fpath: str, value: str):
         ff.write(value)
 
 
-def chat(message: str, max_tokens: int = MAX_TOKENS) -> str:
+def chat(query: str, max_tokens: int = MAX_TOKENS) -> str | None:
     """Sends a message to the Azure OpenAI Chat Completions API
     and returns the generated response.
 
     Args:
-        message (str): The text message to send to the model.
+        query (str): The text message to send to the model.
         max_tokens (int, optional): The maximum number of tokens to generate
                                     in the response. Defaults to MAX_TOKENS.
 
@@ -62,17 +64,20 @@ def chat(message: str, max_tokens: int = MAX_TOKENS) -> str:
     and then sends it to the API.
     The `max_tokens` parameter controls the length of the generated response.
     """
-    message: dict = {'role': 'user', 'content': message}
-    response = CLIENT.chat.completions.create(
+    message: ChatCompletionMessageParam = {'role': 'user', 'content': query}
+    response: ChatCompletion = CLIENT.chat.completions.create(
         messages=[message], model=MODEL, max_tokens=max_tokens
     )
     return response.choices[0].message.content
 
 
-def main(message: str, dst: str = "", max_tokens: int = MAX_TOKENS):
+def main(message: str, dst: str = "", max_tokens: int = MAX_TOKENS) -> None:
     """main"""
     print("chat test starts.")
     content = chat(message, max_tokens)
+    if content is None:
+        warnings.warn("No content returned. finish.")
+        return
     if not dst:
         now: str = datetime.now().strftime(DATETIME_FORMAT)
         dst = os.path.join(DEFAULT_OUTPUT_DIRPATH, f"{now}_result.txt")

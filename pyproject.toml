@@ -36,7 +36,8 @@ dev = [
     "autopep8",
     "flake8",
     "mypy",
-    "pylint"
+    "pylint",
+    "types-requests"
 ]
 
 [project.scripts]

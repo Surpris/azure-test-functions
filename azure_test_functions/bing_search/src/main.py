@@ -3,7 +3,7 @@
 from datetime import datetime
 import json
 import os
-# import time
+from typing import Dict, Any
 import warnings
 import requests
 
@@ -15,11 +15,13 @@ DATETIME_FORMAT: str = '%Y%m%d%H%M%S'
 
 KEY_BING: str | None = os.environ.get("AZURE_BING_KEY", None)
 ENDPOINT_BING_BASE: str | None = os.environ.get("AZURE_BING_ENDPOINT", None)
-ENDPOINT_BING: str | None = f"{ENDPOINT_BING_BASE.rstrip('/')}/v7.0/search"
+ENDPOINT_BING: str = ""
+if ENDPOINT_BING_BASE is not None:
+    ENDPOINT_BING = f"{ENDPOINT_BING_BASE.rstrip('/')}/v7.0/search"
 ENDPOINT_LOCATION: str | None = os.environ.get("AZURE_BING_LOCATION", None)
 
 
-def save(fpath: str, value: dict):
+def save(fpath: str, value: Dict[str, Any]) -> None:
     """Saves a dictionary to a JSON file.
 
     This function serializes a Python dictionary into JSON format and writes it to a specified file.
@@ -32,7 +34,7 @@ def save(fpath: str, value: dict):
         json.dump(value, ff, indent=4)
 
 
-def search(query: str, mkt: str = MARKET_DEFAULT) -> dict:
+def search(query: str, mkt: str = MARKET_DEFAULT) -> Dict[str, Any] | None:
     """Searches the web using the Microsoft Bing Search API.
 
     Args:
@@ -53,18 +55,20 @@ def search(query: str, mkt: str = MARKET_DEFAULT) -> dict:
         warnings.warn("No key for Azure Bing Search allocated.")
         return None
     headers = {'Ocp-Apim-Subscription-Key': KEY_BING}
-    params: dict = {'q': query, 'mkt': mkt}
+    params: Dict[str, str] = {'q': query, 'mkt': mkt}
     response = requests.get(
         ENDPOINT_BING, headers=headers,
         params=params, timeout=TIMEOUT_SEC
     )
     response.raise_for_status()
-    return response.json()
+    return dict(response.json())
 
 
-def main(query: str, mkt: str = MARKET_DEFAULT, dst: str = ""):
+def main(query: str, mkt: str = MARKET_DEFAULT, dst: str = "") -> None:
     """main"""
     response = search(query, mkt)
+    if response is None:
+        return
     if not dst:
         now: str = datetime.now().strftime(DATETIME_FORMAT)
         dst = os.path.join(DEFAULT_OUTPUT_DIRPATH, f"{now}_result.json")
