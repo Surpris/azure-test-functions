@@ -1,0 +1,3 @@
+"""embedding"""
+
+print("hello world")

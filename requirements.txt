@@ -1,0 +1,28 @@
+# General
+
+autopep8
+flake8
+pylint
+requests
+
+# Azure general
+
+azure-common
+azure-core
+
+# gpt
+
+openai
+
+# ocr
+
+azure-ai-vision-imageanalysis
+
+# speech_to_text
+
+azure-cognitiveservices-speech
+mutagen
+
+# translation
+
+azure-ai-translation-text

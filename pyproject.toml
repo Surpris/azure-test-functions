@@ -1,0 +1,41 @@
+[project]
+name = "azure_test_functions"
+version = "0.1.0"
+description = "Functions using the Microsoft Azure Service"
+authors = [{ name = "Surpris", email = "take90-it09-easy27@outlook.jp" }]
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+classifiers = [
+    'Development Status :: 3 - Alpha',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: Apache Software License',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+]
+
+dependencies = [
+    "azure-ai-translation-text",
+    "azure-ai-vision-imageanalysis",
+    "azure-cognitiveservices-speech",
+    "azure-common",
+    "azure-core",
+    "openai",
+    "mutagen",
+]
+
+[project.optional-dependencies]
+
+[project.scripts]
+azure_test_bing_search = "azure_test_functions.bing_search.src.main:main"
+azure_test_gpt = "azure_test_functions.gpt.src.main:main"
+azure_test_ocr = "azure_test_functions.ocr.src.main:main"
+azure_test_speech_to_text = "azure_test_functions.speech_to_text.src.main:main"
+azure_test_translation = "azure_test_functions.translation.src.main:main"
+
+[project.urls]
+Homepage = "https://github.com/Surpris/azure-test-functions"
+Repository = "https://github.com/Surpris/azure-test-functions"
+"Bug Tracker" = "https://github.com/Surpris/azure-test-functions/issues"
