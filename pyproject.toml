@@ -1,5 +1,5 @@
 [project]
-name = "azure_test_functions"
+name = "azure-test-functions"
 version = "0.1.0"
 description = "Functions using the Microsoft Azure Service"
 authors = [{ name = "Surpris", email = "take90-it09-easy27@outlook.jp" }]
@@ -32,6 +32,7 @@ dependencies = [
 azure_test_bing_search = "azure_test_functions.bing_search.src.main:main"
 azure_test_gpt = "azure_test_functions.gpt.src.main:main"
 azure_test_ocr = "azure_test_functions.ocr.src.main:main"
+azure_test_ocr_merge_texts = "azure_test_functions.ocr.src.merge_texts:main"
 azure_test_speech_to_text = "azure_test_functions.speech_to_text.src.main:main"
 azure_test_translation = "azure_test_functions.translation.src.main:main"
 

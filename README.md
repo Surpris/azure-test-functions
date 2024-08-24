@@ -57,41 +57,102 @@ The following environmental variables have to be set before using this module.
 | AZURE_TRANSLATION_ENDPOINT        | Endpoint.               |
 | AZURE_TRANSLATION_ENDPOINT_REGION | Region of the endpoint. |
 
+# Installation
+
+```sh
+git clone https://github.com/Surpris/azure-test-functions.git
+cd azure-test-functions
+pip install .
+```
+
 # Usage
 
 ## bing_search
 
+CLI:
+
 ```sh
-python -m azure-test-functions.bing_search.main <your_query> \
+azure_test_bing_search <your_query> \
     --mkt <your_market> \
-    --dst <destination_dir_path>
+    --dst <dir_path_to_save_result_in>
+```
+
+`python -m`:
+
+```sh
+python -m azure_test_functions.bing_search <your_query> \
+    --mkt <your_market> \
+    --dst <dir_path_to_save_result_in>
 ```
 
 ## gpt
 
+CLI:
+
 ```sh
-python -m azure-test-functions.gpt.main <your_query> \
+azure_test_gpt <your_query> \
     --dst <destination_dir_path> \
-    --max_tokens <max_tokens>
+    --max_tokens <max_tokens_of_response>
+```
+
+`python -m`:
+
+```sh
+python -m azure_test_functions.gpt <your_query> \
+    --dst <destination_dir_path> \
+    --max_tokens <max_tokens_of_response>
 ```
 
 ## ocr
 
+CLI:
+
 ```sh
-python -m azure-test-functions.ocr.main <image_path_or_dir_path>
+azure_test_ocr <file_path_or_dir_path>
+```
+
+`python -m`:
+
+```sh
+python -m azure_test_functions.ocr <file_path_or_dir_path>
+```
+
+### merge_texts for ocr
+
+You can use a CLI command `azure_test_merge_texts` to merge texts in the output of `azure_test_ocr`:
+
+```sh
+azure_test_ocr_merge_texts <ocr_result_file_path_or_dir_path> \
+    --bounding_rect upper_left_x upper_left_y lower_right_x lower_right_y \
+    --dst <dst_file_path_or_dir_path>
 ```
 
 ## speech_to_text
 
+CLI:
+
 ```sh
-python -m azure-test-functions.speech_to_text.main <image_path_or_dir_path> \
-    --dst <destination_dir_path> \
-    --max_tokens <max_tokens>
+azure_test_speech_to_text <file_path_or_dir_path>
+```
+
+`python -m`:
+
+```sh
+python -m azure_test_functions.speech_to_text <file_path_or_dir_path>
 ```
 
 ## translation
 
+CLI:
+
 ```sh
-python -m azure-test-functions.translation.main <image_path_or_dir_path> \
+azure_test_translation <file_path_or_dir_path> \
+    --la <language_to>
+```
+
+`python -m`:
+
+```sh
+python -m azure_test_functions.translation <file_path_or_dir_path> \
     --la <language_to>
 ```
