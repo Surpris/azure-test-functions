@@ -6,7 +6,7 @@ from azure.ai.translation.text import TextTranslationClient
 from azure.core.credentials import AzureKeyCredential
 
 TIMEOUT_SEC: float = 30.0
-WAIT_TIME_SEC: float = 3.0
+WAIT_TIME_SEC: float = 5.0
 DEFAULT_OUTPUT_DIRNAME: str = "translated"
 LANGUAGE_FROM: str = "en"
 LANGUAGE_TO: str = "ja"
@@ -23,6 +23,8 @@ CLIENT = TextTranslationClient(
     region=ENDPOINT_REGION,
     timeout=TIMEOUT_SEC
 )
+
+_KEYBOARD_INTERRUPT_FLAG: bool = False
 
 
 def save(fpath: str, value: str):
@@ -61,12 +63,18 @@ def translate(
 
     """
     input_text_elements = [text]
-    response = CLIENT.translate(
-        body=input_text_elements, to_language=[
-            to_language], from_language=from_language
-    )
-    translation = response[0] if response else None
-    return translation.translations[0].text
+    translation: str | None = None
+    try:
+        response = CLIENT.translate(
+            body=input_text_elements, to_language=[
+                to_language], from_language=from_language
+        )
+        if response:
+            translation = response[0].translations[0].text
+    except KeyboardInterrupt:
+        global _KEYBOARD_INTERRUPT_FLAG  # pylint: disable=global-statement
+        _KEYBOARD_INTERRUPT_FLAG = True
+    return translation
 
 
 def translate_from_file(fpath: str, language: str = LANGUAGE_TO):
@@ -118,6 +126,7 @@ def translate_from_dir(src: str, language: str = LANGUAGE_TO):
     other potential exceptions during translation.  Consider adding more specific error handling 
     to provide informative messages to the user.
     """
+    global _KEYBOARD_INTERRUPT_FLAG  # pylint: disable=global-statement
     if not os.path.isdir(src):
         raise ValueError("'src' must be a directory path.")
     dstdir: str = os.path.join(src, DEFAULT_OUTPUT_DIRNAME)
@@ -131,45 +140,54 @@ def translate_from_dir(src: str, language: str = LANGUAGE_TO):
     ]
     n_files = len(filename_list)
     print(f"# of files: {n_files}")
-    for ii, fname in enumerate(filename_list):
-        print(f"target: {fname} ({ii + 1}/{n_files})")
-        if not os.path.isfile(os.path.join(src, fname)):
-            continue
-        dstpath_target = os.path.join(
-            dstdir,
-            os.path.basename(fname).replace(
-                os.path.splitext(fname)[-1],
-                "_translated.txt"
+    try:
+        for ii, fname in enumerate(filename_list):
+            print(f"target: {fname} ({ii + 1}/{n_files})")
+            if not os.path.isfile(os.path.join(src, fname)):
+                continue
+            dstpath_target = os.path.join(
+                dstdir,
+                os.path.basename(fname).replace(
+                    os.path.splitext(fname)[-1],
+                    "_translated.txt"
+                )
             )
-        )
-        if os.path.exists(dstpath_target):
-            print("already translated.")
-            with open(dstpath_target, "r", encoding="utf-8") as ff:
-                translated = ff.read()
-                translated_list.append(translated)
-            continue
-        if EXCLUDE_SUFFIX in fname:
-            print("a file to exclude. skip.")
-            continue
-        translated = translate_from_file(
-            os.path.join(src, fname),
-            language
-        )
-        if translated is None:
-            print("failure in translation. skip.")
-            continue
-        translated_list.append(translated)
-        dstpath_target = os.path.join(
-            dstdir,
-            os.path.basename(fname).replace(
-                os.path.splitext(fname)[-1],
-                "_translated.txt"
+            if os.path.exists(dstpath_target):
+                print("already translated.")
+                with open(dstpath_target, "r", encoding="utf-8") as ff:
+                    translated = ff.read()
+                    translated_list.append(translated)
+                continue
+            if EXCLUDE_SUFFIX in fname:
+                print("a file to exclude. skip.")
+                continue
+            translated = translate_from_file(
+                os.path.join(src, fname),
+                language
             )
-        )
-        save(dstpath_target, translated)
-        print("done.")
-        time.sleep(WAIT_TIME_SEC)
+            if _KEYBOARD_INTERRUPT_FLAG:
+                print("skip analysis of the rest files due to KeyBoardInterrupt.")
+                break
+            if translated is None:
+                print("failure in translation. skip.")
+                continue
+            translated_list.append(translated)
+            dstpath_target = os.path.join(
+                dstdir,
+                os.path.basename(fname).replace(
+                    os.path.splitext(fname)[-1],
+                    "_translated.txt"
+                )
+            )
+            save(dstpath_target, translated)
+            print(f"done. wait {WAIT_TIME_SEC} sec...")
+            time.sleep(WAIT_TIME_SEC)
+    except KeyboardInterrupt:
+        _KEYBOARD_INTERRUPT_FLAG = True
 
+    if _KEYBOARD_INTERRUPT_FLAG:
+        return
+    print("save a merged translated...")
     dstpath_target = os.path.join(
         dstdir, "translated_merged.txt"
     )

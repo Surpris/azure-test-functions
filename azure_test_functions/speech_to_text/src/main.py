@@ -32,7 +32,7 @@ SPEECH_CONFIG = SpeechConfig(
     speech_recognition_language=LANGUAGE
 )
 
-_KEYBOARD_EXCEPTION_FLAG: bool = False
+_KEYBOARD_INTERRUPT_FLAG: bool = False
 
 
 def save(fpath: str, value: str):
@@ -95,8 +95,8 @@ def analyze(fpath: str) -> str:
             previous_length = len(results)
         speech_recognizer.stop_continuous_recognition()
     except KeyboardInterrupt:
-        global _KEYBOARD_EXCEPTION_FLAG  # pylint: disable=global-statement
-        _KEYBOARD_EXCEPTION_FLAG = True
+        global _KEYBOARD_INTERRUPT_FLAG  # pylint: disable=global-statement
+        _KEYBOARD_INTERRUPT_FLAG = True
         print("keyboard interrupt. stop the current recognition...")
         speech_recognizer.stop_continuous_recognition()
 
@@ -116,7 +116,7 @@ def analyze_from_dir(src: str):
     Raises:
         ValueError: If the provided `src` is not a directory.
     """
-    global _KEYBOARD_EXCEPTION_FLAG  # pylint: disable=global-statement
+    global _KEYBOARD_INTERRUPT_FLAG  # pylint: disable=global-statement
     if not os.path.isdir(src):
         raise ValueError("'src' must be a directory path.")
     dstdir: str = os.path.join(src, DEFAULT_OUTPUT_DIRNAME)
@@ -148,7 +148,7 @@ def analyze_from_dir(src: str):
                     analyzed_list.append(ff.read())
                 continue
             analyzed = analyze(os.path.join(src, fname))
-            if _KEYBOARD_EXCEPTION_FLAG:
+            if _KEYBOARD_INTERRUPT_FLAG:
                 print("skip analysis of the rest files due to KeyBoardInterrupt.")
                 break
             if not analyzed:
@@ -160,9 +160,9 @@ def analyze_from_dir(src: str):
             print("done.")
             time.sleep(WAIT_TIME_SEC)
     except KeyboardInterrupt:
-        _KEYBOARD_EXCEPTION_FLAG = True
+        _KEYBOARD_INTERRUPT_FLAG = True
 
-    if _KEYBOARD_EXCEPTION_FLAG:
+    if _KEYBOARD_INTERRUPT_FLAG:
         return
     print("save a merged transcript...")
     dstpath_target = os.path.join(

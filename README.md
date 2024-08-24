@@ -62,13 +62,17 @@ The following environmental variables have to be set before using this module.
 ## bing_search
 
 ```sh
-python -m azure-test-functions.bing_search.main <your_query> --mkt <your_market> --dst <destination_dir_path>
+python -m azure-test-functions.bing_search.main <your_query> \
+    --mkt <your_market> \
+    --dst <destination_dir_path>
 ```
 
 ## gpt
 
 ```sh
-python -m azure-test-functions.gpt.main <your_query> --dst <destination_dir_path> --max_tokens <max_tokens>
+python -m azure-test-functions.gpt.main <your_query> \
+    --dst <destination_dir_path> \
+    --max_tokens <max_tokens>
 ```
 
 ## ocr
@@ -80,11 +84,14 @@ python -m azure-test-functions.ocr.main <image_path_or_dir_path>
 ## speech_to_text
 
 ```sh
-python -m azure-test-functions.speech_to_text.main <image_path_or_dir_path> --dst <destination_dir_path> --max_tokens <max_tokens>
+python -m azure-test-functions.speech_to_text.main <image_path_or_dir_path> \
+    --dst <destination_dir_path> \
+    --max_tokens <max_tokens>
 ```
 
 ## translation
 
 ```sh
-python -m azure-test-functions.translation.main <image_path_or_dir_path> --la <language_to>
+python -m azure-test-functions.translation.main <image_path_or_dir_path> \
+    --la <language_to>
 ```
