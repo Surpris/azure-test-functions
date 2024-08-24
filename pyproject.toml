@@ -1,5 +1,5 @@
 [project]
-name = "azure_test_functions"
+name = "azure-test-functions"
 version = "0.1.0"
 description = "Functions using the Microsoft Azure Service"
 authors = [{ name = "Surpris", email = "take90-it09-easy27@outlook.jp" }]

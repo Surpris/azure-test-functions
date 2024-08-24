@@ -114,11 +114,11 @@ def analyze_from_dir(src: str):
         src (str): The path to the directory containing image files.
 
     Raises:
-        ValueError: If the provided `src` is not a directory.
+        NotADirectoryError: If the provided `src` is not a directory.
     """
     global _KEYBOARD_INTERRUPT_FLAG  # pylint: disable=global-statement
     if not os.path.isdir(src):
-        raise ValueError("'src' must be a directory path.")
+        raise NotADirectoryError("'src' must be a directory path.")
     dstdir: str = os.path.join(src, DEFAULT_OUTPUT_DIRNAME)
     if not os.path.exists(dstdir):
         os.makedirs(dstdir)
