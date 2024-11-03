@@ -27,12 +27,6 @@ DEFAULT_OUTPUT_DIRNAME: str = "transcribed"
 KEY_SPEECH: str | None = os.environ.get("AZURE_SPEECH_KEY", None)
 ENDPOINT_BASE: str | None = os.environ.get("AZURE_SPEECH_ENDPOINT", None)
 ENDPOINT_REGION: str| None = os.environ.get("AZURE_SPEECH_ENDPOINT_REGION", None)
-
-SPEECH_CONFIG = SpeechConfig(
-    subscription=KEY_SPEECH, region=ENDPOINT_REGION,
-    speech_recognition_language=LANGUAGE
-)
-
 _KEYBOARD_INTERRUPT_FLAG: bool = False
 
 
@@ -51,7 +45,7 @@ def save(fpath: str, value: str) -> None:
         ff.write(value)
 
 
-def analyze(fpath: str) -> str:
+def analyze(fpath: str, lang: str = LANGUAGE) -> str:
     """Analyzes an audio file and returns a list of speech recognition results.
 
     This function performs continuous speech recognition on the specified audio file
@@ -60,13 +54,18 @@ def analyze(fpath: str) -> str:
 
     Args:
         fpath: The path to the audio file.
+        lang (str): The language to transcribe the audio in.
 
     Returns:
         A list of `SpeechRecognitionResult` objects containing the recognized text.
     """
     audio_config = AudioConfig(filename=fpath)
+    speech_config = SpeechConfig(
+        subscription=KEY_SPEECH, region=ENDPOINT_REGION,
+        speech_recognition_language=lang
+    )
     speech_recognizer = SpeechRecognizer(
-        speech_config=SPEECH_CONFIG, audio_config=audio_config
+        speech_config=speech_config, audio_config=audio_config
     )
     results: List[SpeechRecognitionResult] = []
 
@@ -105,7 +104,7 @@ def analyze(fpath: str) -> str:
     return " ".join(results)
 
 
-def analyze_from_dir(src: str) -> None:
+def analyze_from_dir(src: str, lang: str = LANGUAGE) -> None:
     """Analyzes images in a directory and saves results as JSON files.
 
     This function iterates over image files in the specified directory, analyzes each image
@@ -114,6 +113,7 @@ def analyze_from_dir(src: str) -> None:
 
     Args:
         src (str): The path to the directory containing image files.
+        lang (str): The language to transcribe the audio in.
 
     Raises:
         NotADirectoryError: If the provided `src` is not a directory.
@@ -149,7 +149,7 @@ def analyze_from_dir(src: str) -> None:
                 with open(dstpath_target, "r", encoding="utf-8") as ff:
                     analyzed_list.append(ff.read())
                 continue
-            analyzed = analyze(os.path.join(src, fname))
+            analyzed = analyze(os.path.join(src, fname), lang)
             if _KEYBOARD_INTERRUPT_FLAG:
                 print("skip analysis of the rest files due to KeyBoardInterrupt.")
                 break
@@ -173,7 +173,7 @@ def analyze_from_dir(src: str) -> None:
     save(dstpath_target, "\n\n".join(analyzed_list))
 
 
-def main(file_or_dir_path: str) -> None:
+def main(file_or_dir_path: str, lang: str) -> None:
     """Analyzes an audio file or directory and saves the analysis results as JSON.
 
     This function recursively analyzes all audio files within the specified directory
@@ -190,10 +190,10 @@ def main(file_or_dir_path: str) -> None:
         OSError: If an error occurs during file operations.
     """
     if os.path.isdir(file_or_dir_path):
-        analyze_from_dir(file_or_dir_path)
+        analyze_from_dir(file_or_dir_path, lang)
     else:
         print("analyze...")
-        analyzed = analyze(file_or_dir_path)
+        analyzed = analyze(file_or_dir_path, lang)
         if not analyzed:
             raise ValueError("failure in analysis.")
         dstdir = os.path.join(
@@ -216,9 +216,13 @@ def main(file_or_dir_path: str) -> None:
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("src", type=str)
+    parser.add_argument("src", type=str, help="the path of dir or audio file")
+    parser.add_argument(
+        "--la", dest="la", default=LANGUAGE,
+        help="language to transcribe the file(s) in"
+    )
     parser.add_argument(
         "--same_level", dest="same_level", action="store_true"
     )
     args = parser.parse_args()
-    main(args.src)
+    main(args.src, args.la)
