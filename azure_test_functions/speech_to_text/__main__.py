@@ -13,5 +13,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--same_level", dest="same_level", action="store_true"
     )
+    parser.add_argument(
+        "--fast_mode", dest="fast_mode", action="store_true"
+    )
     args = parser.parse_args()
-    main(args.src, args.la)
+    if args.fast_mode:
+        print("use the fast transcription API.")
+    main(args.src, args.la, args.fast_mode)
