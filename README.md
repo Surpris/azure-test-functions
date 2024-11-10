@@ -132,13 +132,17 @@ azure_test_ocr_merge_texts <ocr_result_file_path_or_dir_path> \
 CLI:
 
 ```sh
-azure_test_speech_to_text <file_path_or_dir_path>
+azure_test_speech_to_text <file_path_or_dir_path> \
+    --dst <dst_file_path_or_dir_path> \
+    --la <language_to> --fast_mode
 ```
 
 `python -m`:
 
 ```sh
-python -m azure_test_functions.speech_to_text <file_path_or_dir_path>
+python -m azure_test_functions.speech_to_text <file_path_or_dir_path> \
+    --dst <dst_file_path_or_dir_path> \
+    --la <language_to> --fast_mode
 ```
 
 ## translation

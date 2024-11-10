@@ -1,5 +1,6 @@
 """speech_to_text"""
 
+import json
 import os
 import time
 from typing import Dict, List, Type, Union
@@ -11,6 +12,7 @@ from azure.cognitiveservices.speech import (
 )
 from mutagen.mp3 import MP3
 from mutagen.wave import WAVE
+import requests
 
 MUTAGEN_ANALYZER_TYPE: TypeAlias = MP3 | WAVE
 MUTAGEN_ANALYZER_DICT: Dict[str, Union[Type[MP3], Type[WAVE]]] = {
@@ -24,9 +26,12 @@ WAIT_TIME_SEC: float = 3.0
 LANGUAGE: str = "ja-JP"
 DEFAULT_OUTPUT_DIRNAME: str = "transcribed"
 
-KEY_SPEECH: str | None = os.environ.get("AZURE_SPEECH_KEY", None)
-ENDPOINT_BASE: str | None = os.environ.get("AZURE_SPEECH_ENDPOINT", None)
-ENDPOINT_REGION: str| None = os.environ.get("AZURE_SPEECH_ENDPOINT_REGION", None)
+KEY_SPEECH: str = os.environ.get("AZURE_SPEECH_KEY", "")
+ENDPOINT_BASE: str = os.environ.get("AZURE_SPEECH_ENDPOINT", "")
+ENDPOINT_REGION: str = os.environ.get(
+    "AZURE_SPEECH_ENDPOINT_REGION", ""
+)
+ENDPOINT_FAST: str = f"{ENDPOINT_BASE}/speechtotext/transcriptions:transcribe?api-version=2024-05-15-preview"
 _KEYBOARD_INTERRUPT_FLAG: bool = False
 
 
@@ -43,6 +48,47 @@ def save(fpath: str, value: str) -> None:
     """
     with open(fpath, "w", encoding="utf-8") as ff:
         ff.write(value)
+
+
+def analyze_with_fast(fpath: str, lang: str = LANGUAGE) -> str:
+    """Analyzes an audio file using the Fast Transcription API.
+
+    Sends an audio file to the specified endpoint for transcription and 
+    profanity filtering using a pre-defined configuration.
+
+    Args:
+        fpath: The path to the audio file (WAV format).
+        lang: The language of the audio. Defaults to the globally defined `LANGUAGE`.
+
+    Returns:
+        The combined transcribed text from all channels, with profanity masked.
+
+    Raises:
+        requests.exceptions.HTTPError: If the API request returns an error status code.
+
+    """
+    headers = {
+        "Accept": "application/json",
+        "Ocp-Apim-Subscription-Key": KEY_SPEECH
+    }
+
+    definition = {
+        "locales": [lang],
+        "profanityFilterMode": "Masked",
+        "channels": [0, 1]
+    }
+
+    files = {
+        "audio": ("audio.wav", open(fpath, "rb")),
+        "definition": (None, json.dumps(definition), "application/json")
+    }
+
+    response = requests.post(
+        ENDPOINT_FAST, headers=headers, files=files,
+        timeout=TIMEOUT_SEC * 2
+    )
+    response.raise_for_status()
+    return response.json()['combinedPhrases'][0]['text']
 
 
 def analyze(fpath: str, lang: str = LANGUAGE) -> str:
@@ -104,7 +150,7 @@ def analyze(fpath: str, lang: str = LANGUAGE) -> str:
     return " ".join(results)
 
 
-def analyze_from_dir(src: str, lang: str = LANGUAGE) -> None:
+def analyze_from_dir(src: str, lang: str = LANGUAGE, fast_mode: bool = True) -> None:
     """Analyzes images in a directory and saves results as JSON files.
 
     This function iterates over image files in the specified directory, analyzes each image
@@ -114,6 +160,7 @@ def analyze_from_dir(src: str, lang: str = LANGUAGE) -> None:
     Args:
         src (str): The path to the directory containing image files.
         lang (str): The language to transcribe the audio in.
+        fast_mode (bool): Use the fast transcription API if True.
 
     Raises:
         NotADirectoryError: If the provided `src` is not a directory.
@@ -149,7 +196,11 @@ def analyze_from_dir(src: str, lang: str = LANGUAGE) -> None:
                 with open(dstpath_target, "r", encoding="utf-8") as ff:
                     analyzed_list.append(ff.read())
                 continue
-            analyzed = analyze(os.path.join(src, fname), lang)
+            analyzed: str = ""
+            if fast_mode:
+                analyzed = analyze_with_fast(os.path.join(src, fname), lang)
+            else:
+                analyzed = analyze(os.path.join(src, fname), lang)
             if _KEYBOARD_INTERRUPT_FLAG:
                 print("skip analysis of the rest files due to KeyBoardInterrupt.")
                 break
@@ -173,7 +224,7 @@ def analyze_from_dir(src: str, lang: str = LANGUAGE) -> None:
     save(dstpath_target, "\n\n".join(analyzed_list))
 
 
-def main(file_or_dir_path: str, lang: str) -> None:
+def main(file_or_dir_path: str, lang: str, fast_mode: bool) -> None:
     """Analyzes an audio file or directory and saves the analysis results as JSON.
 
     This function recursively analyzes all audio files within the specified directory
@@ -182,18 +233,24 @@ def main(file_or_dir_path: str, lang: str) -> None:
     same directory as the input file.
 
     Args:
-        file_or_dir_path: The path to an audio file or directory. Supported audio formats are
-               WAV and MP3.
+        file_or_dir_path: The path to an audio file or directory.
+            Supported audio formats are WAV and MP3.
+        lang (str): The language to transcribe the audio in.
+        fast_mode (bool): Use the fast transcription API if True.
 
     Raises:
         ValueError: If the specified path is invalid or if the analysis fails.
         OSError: If an error occurs during file operations.
     """
     if os.path.isdir(file_or_dir_path):
-        analyze_from_dir(file_or_dir_path, lang)
+        analyze_from_dir(file_or_dir_path, lang, fast_mode)
     else:
         print("analyze...")
-        analyzed = analyze(file_or_dir_path, lang)
+        analyzed: str = ""
+        if fast_mode:
+            analyzed = analyze_with_fast(file_or_dir_path, lang)
+        else:
+            analyzed = analyze(file_or_dir_path, lang)
         if not analyzed:
             raise ValueError("failure in analysis.")
         dstdir = os.path.join(
@@ -224,5 +281,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--same_level", dest="same_level", action="store_true"
     )
+    parser.add_argument(
+        "--fast_mode", dest="fast_mode", action="store_true"
+    )
     args = parser.parse_args()
-    main(args.src, args.la)
+    if args.fast_mode:
+        print("use the fast transcription API.")
+    main(args.src, args.la, args.fast_mode)

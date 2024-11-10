@@ -15,13 +15,6 @@ DEFAULT_OUTPUT_DIRNAME: str = "analyzed"
 KEY_CV: str = os.environ.get("AZURE_CV_KEY", "")
 ENDPOINT_BASE: str = os.environ.get("AZURE_CV_ENDPOINT", "")
 
-# Create an Image Analysis client
-CLIENT = ImageAnalysisClient(
-    endpoint=ENDPOINT_BASE,
-    credential=AzureKeyCredential(KEY_CV),
-    timeout=TIMEOUT_SEC
-)
-
 
 def save(fpath: str, value: Dict[str, Any]) -> None:
     """Saves a dictionary to a JSON file.
@@ -54,7 +47,12 @@ def analyze(fpath: str) -> Dict[str, Any]:
     with open(fpath, "rb") as ff:
         image_data = ff.read()
 
-    result = CLIENT.analyze(
+    client: ImageAnalysisClient = ImageAnalysisClient(
+        endpoint=ENDPOINT_BASE,
+        credential=AzureKeyCredential(KEY_CV),
+        timeout=TIMEOUT_SEC
+    )
+    result = client.analyze(
         image_data,
         visual_features=[VisualFeatures.READ]
     )

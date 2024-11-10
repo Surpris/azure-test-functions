@@ -16,13 +16,6 @@ KEY_TRANSLATION: str = os.environ.get("AZURE_TRANSLATION_KEY", "")
 ENDPOINT_BASE: str | None = os.environ.get("AZURE_TRANSLATION_ENDPOINT", None)
 ENDPOINT_REGION: str | None = os.environ.get("AZURE_TRANSLATION_ENDPOINT_REGION", None)
 
-# Create an Image Analysis client
-CLIENT = TextTranslationClient(
-    endpoint=ENDPOINT_BASE,
-    credential=AzureKeyCredential(KEY_TRANSLATION),
-    region=ENDPOINT_REGION,
-    timeout=TIMEOUT_SEC
-)
 
 _KEYBOARD_INTERRUPT_FLAG: bool = False
 
@@ -65,7 +58,13 @@ def translate(
     input_text_elements = [text]
     translation: str | None = None
     try:
-        response = CLIENT.translate(
+        client: TextTranslationClient = TextTranslationClient(
+            endpoint=ENDPOINT_BASE,
+            credential=AzureKeyCredential(KEY_TRANSLATION),
+            region=ENDPOINT_REGION,
+            timeout=TIMEOUT_SEC
+        )
+        response = client.translate(
             body=input_text_elements, to_language=[
                 to_language], from_language=from_language
         )
