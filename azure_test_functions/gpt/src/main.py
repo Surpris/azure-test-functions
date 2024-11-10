@@ -21,12 +21,6 @@ MODEL: str = os.environ.get("AZURE_OPENAI_CHAT_MODEL", "")
 API_VERSION: str | None = os.getenv("AZURE_OPENAI_CHAT_API_VERSION")
 # LOCATION: str | None = os.getenv("AZURE_OPENAI_LOCATION")
 
-CLIENT = AzureOpenAI(
-    api_key=ENDPOINT_KEY,
-    api_version=API_VERSION,
-    azure_endpoint=ENDPOINT_BASE
-)
-
 
 def save(fpath: str, value: str) -> None:
     """Saves a string to a specified file.
@@ -65,7 +59,12 @@ def chat(query: str, max_tokens: int = MAX_TOKENS) -> str | None:
     The `max_tokens` parameter controls the length of the generated response.
     """
     message: ChatCompletionMessageParam = {'role': 'user', 'content': query}
-    response: ChatCompletion = CLIENT.chat.completions.create(
+    client: AzureOpenAI = AzureOpenAI(
+        api_key=ENDPOINT_KEY,
+        api_version=API_VERSION,
+        azure_endpoint=ENDPOINT_BASE
+    )
+    response: ChatCompletion = client.chat.completions.create(
         messages=[message], model=MODEL, max_tokens=max_tokens
     )
     return response.choices[0].message.content
