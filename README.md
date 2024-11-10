@@ -14,7 +14,7 @@ Functions using the Microsoft Azure Service.
 
 # Required environmental variables
 
-The following environmental variables have to be set before using this module.
+It is desirable to set the following environmental variables before using each function in this module. You can set them by importing the corresponding constants in this module.
 
 ## bing_search
 
@@ -58,6 +58,14 @@ The following environmental variables have to be set before using this module.
 | AZURE_TRANSLATION_ENDPOINT_REGION | Region of the endpoint. |
 
 # Installation
+
+## `pip install` from repository
+
+```sh
+pip install git+https://github.com/Surpris/azure-test-functions.git
+```
+
+## `git clone` and `pip install`
 
 ```sh
 git clone https://github.com/Surpris/azure-test-functions.git
