@@ -26,7 +26,7 @@ def save(fpath: str, value: Dict[str, Any]) -> None:
         value (dict): The Python dictionary to be serialized and saved.
     """
     with open(fpath, "w", encoding="utf-8") as ff:
-        json.dump(value, ff, indent=4)
+        json.dump(value, ff, indent=4, ensure_ascii=False)
 
 
 def analyze(fpath: str) -> Dict[str, Any]:

@@ -86,7 +86,7 @@ def extract_texts(src: Dict[str, Any], bounding_rect: List[int] | None = None) -
             if is_in_bounding_rect(bounding_, bounding_rect):
                 texts_in.append(line["text"])
     else:
-        texts_in = src["readResult"]["blocks"][0]["lines"]
+        texts_in = [line["text"] for line in src["readResult"]["blocks"][0]["lines"]]
     return " ".join(texts_in)
 
 

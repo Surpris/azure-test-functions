@@ -3,12 +3,13 @@
 import json
 import os
 import time
+import traceback
 from typing import Dict, List, Type, Union
 from typing_extensions import TypeAlias
 from azure.cognitiveservices.speech import (
     SpeechConfig, AudioConfig, SpeechRecognizer,
     SpeechRecognitionResult, SpeechRecognitionEventArgs,
-    ResultReason
+    ResultReason, PropertyId
 )
 from mutagen.mp3 import MP3
 from mutagen.wave import WAVE
@@ -24,7 +25,16 @@ AUDIO_DURATION_SEC_DEFAULT: float = 120.0
 TIMEOUT_SEC: float = 30.0
 WAIT_TIME_SEC: float = 3.0
 LANGUAGE: str = "ja-JP"
+SUPPORTED_LANGUAGES: List[str] = [
+    "ja-JP", "en-US", "zh-CN", "fr-FR", "de-DE",
+    "es-ES", "it-IT", "pt-BR", "ko-KR", "ru-RU",
+    "ar-SA", "nl-NL", "sv-SE", "da-DK", "fi-FI",
+    "nb-NO", "pl-PL", "tr-TR", "cs-CZ", "hu-HU",
+    "el-GR", "ro-RO", "sk-SK", "th-TH", "vi-VN",
+    "hi-IN", "bn-BD", "id-ID", "ms-MY", "en-PH",
+]
 DEFAULT_OUTPUT_DIRNAME: str = "transcribed"
+DEFAULT_LOG_OUTPUT_FILENAME: str = "speech-to-text-log.txt"
 
 KEY_SPEECH: str = os.environ.get("AZURE_SPEECH_KEY", "")
 ENDPOINT_BASE: str = os.environ.get("AZURE_SPEECH_ENDPOINT", "")
@@ -110,6 +120,10 @@ def analyze(fpath: str, lang: str = LANGUAGE) -> str:
         subscription=KEY_SPEECH, region=ENDPOINT_REGION,
         speech_recognition_language=lang
     )
+    speech_config.set_property(
+        PropertyId.Speech_LogFilename,
+        os.path.join(os.path.dirname(fpath), DEFAULT_LOG_OUTPUT_FILENAME)
+    )
     speech_recognizer = SpeechRecognizer(
         speech_config=speech_config, audio_config=audio_config
     )
@@ -117,7 +131,8 @@ def analyze(fpath: str, lang: str = LANGUAGE) -> str:
 
     audio_duration_sec: float = AUDIO_DURATION_SEC_DEFAULT
     mutagen_analyzer = MUTAGEN_ANALYZER_DICT.get(
-        os.path.splitext(fpath)[-1][1:], None)
+        os.path.splitext(fpath)[-1][1:], None
+    )
     if mutagen_analyzer is not None:
         audio: MUTAGEN_ANALYZER_TYPE = mutagen_analyzer(fpath)
         if audio.info is not None:
@@ -145,6 +160,9 @@ def analyze(fpath: str, lang: str = LANGUAGE) -> str:
         global _KEYBOARD_INTERRUPT_FLAG  # pylint: disable=global-statement
         _KEYBOARD_INTERRUPT_FLAG = True
         print("keyboard interrupt. stop the current recognition...")
+        speech_recognizer.stop_continuous_recognition()
+    except Exception as _:
+        traceback.print_exc()
         speech_recognizer.stop_continuous_recognition()
 
     return " ".join(results)
@@ -176,6 +194,10 @@ def analyze_from_dir(src: str, lang: str = LANGUAGE, fast_mode: bool = True) -> 
     filename_list = [
         fname for fname in os.listdir(src)
         if os.path.isfile(os.path.join(src, fname))
+    ]
+    filename_list = [
+        fname for fname in filename_list
+        if os.path.splitext(fname)[-1][1:] in list(MUTAGEN_ANALYZER_DICT)
     ]
     n_files = len(filename_list)
     print(f"# of files: {n_files}")
@@ -285,6 +307,11 @@ if __name__ == "__main__":
         "--fast_mode", dest="fast_mode", action="store_true"
     )
     args = parser.parse_args()
+    if args.la not in SUPPORTED_LANGUAGES:
+        raise ValueError(
+            f"language '{args.la}' is not supported. "
+            f"supported languages are {SUPPORTED_LANGUAGES}."
+        )
     if args.fast_mode:
         print("use the fast transcription API.")
     main(args.src, args.la, args.fast_mode)
